@@ -42,17 +42,25 @@ library(extrafont)
 # Set working directory
 setwd("/Users/simontye/Documents/Research/Projects/Hobo_Maps")
 
-# Load files (data.#a files = 1885 - 1946; data.#b files = 1929 - 1939; data.#c files = 1885 - 1946 w/o #40 that went to Canada)
-data.1a  <- read.csv(file = "Hobo_Trips.csv", head = TRUE, sep = ",")
-data.1b  <- subset(data.1a, Year_Start >= 1929)
-data.1b  <- subset(data.1b, Year_End   <= 1939)
-data.1c  <- data.1a[-c(109:133), ]
-data.2a  <- read.csv(file = "Hobo_Trips2.csv", head = TRUE, sep = ",")
-data.2b  <- subset(data.2a, Year_Start >= 1929)
-data.2b  <- subset(data.2b, Year_End   <= 1939)
-data.2c  <- read.csv(file = "Hobo_Trips2c.csv", head = TRUE, sep = ",")
-data.3a  <- read.csv(file = "Hobo_Trips3a.csv", head = TRUE, sep = ",")
-data.3b  <- read.csv(file = "Hobo_Trips3b.csv", head = TRUE, sep = ",")
+# Load files
+# data.#a files = 1885 - 1946
+# data.#b files = 1929 - 1939
+# data.#c files = 1885 - 1946 w/o #40
+# data.umland.x = 1928
+# data.umland.y = 1929 - 1931
+data.1a       <- read.csv(file = "Hobo_Trips.csv", head = TRUE, sep = ",")
+data.1b       <- subset(data.1a, Year_Start >= 1929)
+data.1b       <- subset(data.1b, Year_End   <= 1939)
+data.1c       <- data.1a[-c(109:133), ]
+data.2a       <- read.csv(file = "Hobo_Trips2.csv", head = TRUE, sep = ",")
+data.2b       <- subset(data.2a, Year_Start >= 1929)
+data.2b       <- subset(data.2b, Year_End   <= 1939)
+data.2c       <- read.csv(file = "Hobo_Trips2c.csv", head = TRUE, sep = ",")
+data.3a       <- read.csv(file = "Hobo_Trips3a.csv", head = TRUE, sep = ",")
+data.3b       <- read.csv(file = "Hobo_Trips3b.csv", head = TRUE, sep = ",")
+data.umland   <- read.csv(file = "Hobo_Trips_Umland.csv", head = TRUE, sep = ",")
+data.umland.x <- subset(data.umland, Year == 1928)
+data.umland.y <- subset(data.umland, Year == 1929)
 
 ###############################################################
 ### Create base map
@@ -67,7 +75,14 @@ google.map <- get_googlemap(center = c(lon = -100, lat = 45), zoom = 3, scale = 
 states <- st_as_sf(map("state", plot = FALSE, fill = TRUE))
 states <- cbind(states, st_coordinates(st_centroid(states)))
 states$ID <- toTitleCase(states$ID)
-map <- ne_countries(scale = "medium", returnclass = "sf")
+
+# Create maps of USA, Canada, North America, and the world
+map.us   <- ne_countries(country = "united states of america", scale = "medium", returnclass = "sf")
+map.can  <- ne_countries(country = "canada", scale = "medium", returnclass = "sf")
+map.na   <- ne_countries(continent = "north america", scale = "medium", returnclass = "sf")
+world    <- getMap(resolution = "high")
+world    <- st_as_sf(world)
+#canada   <- subset(world, ne_10m_adm = "CAN")
 
 # Reformat data
 data.1a$Lat        <- as.numeric(as.character(data.1a$Lat))
@@ -77,16 +92,16 @@ data.1a$City       <- as.factor(data.1a$City)
 data.1a$Year       <- as.factor(data.1a$Year)
 
 # Subset data for each individual
-hobo.1        <- subset(data.1a, Individual == "1")
-hobo.1.points <- nrow(hobo.1)
-hobo.2        <- subset(data.1a, Individual == "2")
-hobo.2.points <- nrow(hobo.2)
-hobo.7        <- subset(data.1a, Individual == "7")
-hobo.7.points <- nrow(hobo.7)
-hobo.8        <- subset(data.1a, Individual == "8")
-hobo.8.points <- nrow(hobo.8)
-hobo.9        <- subset(data.1a, Individual == "9")
-hobo.9.points <- nrow(hobo.9)
+hobo.1         <- subset(data.1a, Individual == "1")
+hobo.1.points  <- nrow(hobo.1)
+hobo.2         <- subset(data.1a, Individual == "2")
+hobo.2.points  <- nrow(hobo.2)
+hobo.7         <- subset(data.1a, Individual == "7")
+hobo.7.points  <- nrow(hobo.7)
+hobo.8         <- subset(data.1a, Individual == "8")
+hobo.8.points  <- nrow(hobo.8)
+hobo.9         <- subset(data.1a, Individual == "9")
+hobo.9.points  <- nrow(hobo.9)
 hobo.14        <- subset(data.1a, Individual == "14")
 hobo.14.points <- nrow(hobo.14)
 hobo.15        <- subset(data.1a, Individual == "15")
@@ -169,7 +184,7 @@ dev.off()
 ### Figure 1b: State map w/ all localities (1885 - 1946)
 
 pdf("hobo_fig1b.pdf", width = 12, height = 10)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.5) + 
   geom_point(data = data.1c, aes(x = Long, y = Lat, fill = factor(Name)), color = "black", shape = 21, size = 3) +
   coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
@@ -231,7 +246,7 @@ dev.off()
 ### Figure 1d: State map w/ all localities (1929 - 1939)
 
 pdf("hobo_fig1d.pdf", width = 12, height = 7)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.5) + 
   geom_point(data = data.1b, aes(x = Long, y = Lat, fill = factor(Name)), color = "black", shape = 21, size = 3) +
   coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
@@ -1329,7 +1344,7 @@ htmlwidgets::saveWidget(as_widget(hobo.8.interactive), "hobo_fig3_8.html")
 
 # Individual 1
 pdf("hobo_fig4_1.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.1, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.1, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1354,7 +1369,7 @@ dev.off()
 
 # Individual 2
 pdf("hobo_fig4_2.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.2, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.2, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1379,7 +1394,7 @@ dev.off()
 
 # Individual 7
 pdf("hobo_fig4_7.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.7, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.7, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1404,7 +1419,7 @@ dev.off()
 
 # Individual 8
 pdf("hobo_fig4_8.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.8, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.8, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1429,7 +1444,7 @@ dev.off()
 
 # Individual 9
 pdf("hobo_fig4_9.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.9, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.9, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1454,7 +1469,7 @@ dev.off()
 
 # Individual 14
 pdf("hobo_fig4_14.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.14, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.14, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1479,7 +1494,7 @@ dev.off()
 
 # Individual 15
 pdf("hobo_fig4_15.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.15, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.15, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1504,7 +1519,7 @@ dev.off()
 
 # Individual 16
 pdf("hobo_fig4_16.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.16, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.16, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1529,7 +1544,7 @@ dev.off()
 
 # Individual 19
 pdf("hobo_fig4_19.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.19, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.19, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1554,7 +1569,7 @@ dev.off()
 
 # Individual 23
 pdf("hobo_fig4_23.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.23, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.23, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1579,7 +1594,7 @@ dev.off()
 
 # Individual 24
 pdf("hobo_fig4_24.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.24, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.24, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1604,7 +1619,7 @@ dev.off()
 
 # Individual 25
 pdf("hobo_fig4_25.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.25, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.25, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1629,7 +1644,7 @@ dev.off()
 
 # Individual 26
 pdf("hobo_fig4_26.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.26, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.26, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1654,7 +1669,7 @@ dev.off()
 
 # Individual 27
 pdf("hobo_fig4_27.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.27, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.27, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1679,7 +1694,7 @@ dev.off()
 
 # Individual 28
 pdf("hobo_fig4_28.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.28, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.28, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1704,7 +1719,7 @@ dev.off()
 
 # Individual 29
 pdf("hobo_fig4_29.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.29, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.29, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1729,7 +1744,7 @@ dev.off()
 
 # Individual 33
 pdf("hobo_fig4_33.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.33, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.33, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1754,7 +1769,7 @@ dev.off()
 
 # Individual 35
 pdf("hobo_fig4_35.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.35, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.35, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1779,7 +1794,7 @@ dev.off()
 
 # Individual 36
 pdf("hobo_fig4_36.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.36, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.36, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1804,7 +1819,7 @@ dev.off()
 
 # Individual 37
 pdf("hobo_fig4_37.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.37, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.37, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1829,7 +1844,7 @@ dev.off()
 
 # Individual 38
 pdf("hobo_fig4_38.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.38, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.38, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1854,7 +1869,7 @@ dev.off()
 
 # Individual 39
 pdf("hobo_fig4_39.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.39, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.39, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1879,7 +1894,7 @@ dev.off()
 
 # Individual 42
 pdf("hobo_fig4_42.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.42, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.42, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1904,7 +1919,7 @@ dev.off()
 
 # Individual 44
 pdf("hobo_fig4_44.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.44, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.44, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1929,7 +1944,7 @@ dev.off()
 
 # Individual 45
 pdf("hobo_fig4_45.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.45, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.45, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1954,7 +1969,7 @@ dev.off()
 
 # Individual 46
 pdf("hobo_fig4_46.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.46, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.46, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -1979,7 +1994,7 @@ dev.off()
 
 # Individual 50
 pdf("hobo_fig4_50.pdf", width = 12, height = 8)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
   geom_path(data = hobo.50, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
   geom_point(data = hobo.50, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
@@ -2010,7 +2025,7 @@ data.states.a <- merge(states, data.3a, by = "ID", all.x = TRUE, all.y = TRUE)
 
 # Create figure
 pdf("hobo_fig5a.pdf", width = 12, height = 7)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = data.states.a, aes(fill = factor(Count))) + 
   coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
   scale_fill_brewer(breaks = c(11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1), labels = c("11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"), palette = "YlOrRd") +
@@ -2040,7 +2055,7 @@ data.states.b <- merge(states, data.3b, by = "ID", all.x = TRUE, all.y = TRUE)
 
 # Create figure
 pdf("hobo_fig5b.pdf", width = 12, height = 7)
-ggplot(data = map) +
+ggplot(data = map.us) +
   geom_sf(data = data.states.b, aes(fill = factor(Count))) + 
   coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
   scale_fill_brewer(breaks = c(9, 8, 7, 6, 5, 4, 3, 2, 1), labels = c("9", "8", "7", "6", "5", "4", "3", "2", "1"), palette = "YlOrRd") +
@@ -2063,8 +2078,66 @@ ggplot(data = map) +
 dev.off()
 
 ###############################################################
+### Figure 6a: Rudloph Umland (1928)
+
+pdf("hobo_fig6a_umland1928.pdf", width = 12, height = 8)
+ggplot() +
+  geom_sf(data = world, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
+  geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
+  geom_path(data = data.umland.x, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
+  geom_point(data = data.umland.x, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
+  geom_label_repel(data = data.umland.x, aes(x = Long, y = Lat, label = City2), hjust = 0.0, vjust = -0.5, inherit.aes = FALSE, label.size = 0.43) +
+  coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
+  labs(x = "Longitude", y = "Latitude", title = paste(data.umland.x$Name,"( 1928 )")) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 36, margin = margin(0, 0, 5 ,0), family = "Trattatello"),
+        plot.background = element_rect(fill = 'ivory2', color = 'black'),
+        plot.margin = unit(c(1, 1, 1, 1), "cm"),
+        panel.background = element_rect(fill = "ivory"),
+        panel.border = element_rect(color = "black", fill = "NA", size = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 14),
+        axis.ticks = element_line(color = "black", size = 0.5),
+        axis.title = element_text(color = "black"),
+        axis.text.y = element_text(color = "black"),
+        axis.text.x = element_text(color = "black"),
+        axis.title.x = element_text(face = "bold", margin = margin(20, 0, 0, 0)),
+        axis.title.y = element_text(face = "bold", margin = margin(0, 20, 0, 0)))
+dev.off()
+
+###############################################################
+### Figure 6a: Rudloph Umland (1929 - 1931)
+
+pdf("hobo_fig6b_umland1929.pdf", width = 12, height = 8)
+ggplot() +
+  geom_sf(data = world, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
+  geom_sf(data = states, fill = "lemonchiffon4", color = "ivory", size = 0.25) + 
+  geom_path(data = data.umland.y, aes(x = Long, y = Lat), color = "cadetblue2", size = 1) +
+  geom_point(data = data.umland.y, aes(x = Long, y = Lat), fill = "cadetblue2", color = "black", shape = 21, size = 4) +
+  geom_label_repel(data = data.umland.y, aes(x = Long, y = Lat, label = City2), hjust = 0.0, vjust = -0.5, inherit.aes = FALSE, label.size = 0.43) +
+  coord_sf(xlim = c(-130, -63), ylim = c(23, 53), expand = FALSE) +
+  labs(x = "Longitude", y = "Latitude", title = paste(data.umland.x$Name,"( 1929 - 1931 )")) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 36, margin = margin(0, 0, 5 ,0), family = "Trattatello"),
+        plot.background = element_rect(fill = 'ivory2', color = 'black'),
+        plot.margin = unit(c(1, 1, 1, 1), "cm"),
+        panel.background = element_rect(fill = "ivory"),
+        panel.border = element_rect(color = "black", fill = "NA", size = 1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 14),
+        axis.ticks = element_line(color = "black", size = 0.5),
+        axis.title = element_text(color = "black"),
+        axis.text.y = element_text(color = "black"),
+        axis.text.x = element_text(color = "black"),
+        axis.title.x = element_text(face = "bold", margin = margin(20, 0, 0, 0)),
+        axis.title.y = element_text(face = "bold", margin = margin(0, 20, 0, 0)))
+dev.off()
+
 ###############################################################
 ###############################################################
+###############################################################
+
+
 
 
 
